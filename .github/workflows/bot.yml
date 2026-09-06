@@ -2,7 +2,7 @@ name: Kenya Meme Bot
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours (was 3 - caused block)
+    - cron: '0 */9 * * *'  # Every 6 hours (was 3 - caused block)
   workflow_dispatch:  # So you can click Run button
 
 jobs:
