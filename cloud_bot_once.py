@@ -1,82 +1,46 @@
 from instagrapi import Client
-import os
-import time
-import random
-import requests
+import os, time, random, requests
 from pathlib import Path
 
-# Get from GitHub Secrets
 IG_USERNAME = os.getenv("IG_USERNAME")
 IG_PASSWORD = os.getenv("IG_PASSWORD")
 
-print(f"Trying to login as: {IG_USERNAME}")
-
 cl = Client()
-cl.delay_range = [3, 8]  # Human delay
+cl.delay_range = [5, 15]  # Very human
 
-# IMPORTANT: Wait like a human before login
-sleep_time = random.randint(25, 50)
-print(f"Waiting {sleep_time}s like human to avoid block...")
-time.sleep(sleep_time)
+# Extra long human wait - 1 to 2 minutes
+wait = random.randint(60, 120)
+print(f"SAFE MODE: Waiting {wait}s...")
+time.sleep(wait)
 
-# LOGIN - with auto handling
 try:
-    # Try to login
     cl.login(IG_USERNAME, IG_PASSWORD)
-    print("✅ Login SUCCESS!")
-
+    print("Login OK")
 except Exception as e:
-    print(f"❌ Login failed: {e}")
-    print("Instagram blocked for now. Will try again in next run. Exiting clean.")
-    # Exit with 0 so GitHub doesn't mark as spammy failure
+    print(f"Blocked, will retry tomorrow: {e}")
     exit(0)
 
-# === POST A MEME ===
 try:
-    print("Getting a meme...")
-    
-    # Download a random meme image
-    meme_folder = Path("memes")
-    meme_folder.mkdir(exist_ok=True)
-    
-    # Get random meme from API
+    # Only post 1 image per day - SAFE
     r = requests.get("https://meme-api.com/gimme/kenyamemes", timeout=20)
     if r.status_code != 200:
         r = requests.get("https://meme-api.com/gimme/memes", timeout=20)
-    
     data = r.json()
-    image_url = data.get("url")
-    title = data.get("title", "Kenya meme 😂")[:80]
+    img_url = data.get("url", "https://picsum.photos/1080/1080")
+    title = data.get("title", "Kenya")[:60]
 
-    if not image_url:
-        print("No meme found, using fallback")
-        image_url = "https://picsum.photos/1080/1080"
+    img_data = requests.get(img_url, timeout=20).content
+    Path("memes").mkdir(exist_ok=True)
+    p = Path("memes/today.jpg")
+    p.write_bytes(img_data)
 
-    # Download image
-    img_data = requests.get(image_url, timeout=20).content
-    image_path = meme_folder / "today.jpg"
-    with open(image_path, "wb") as f:
-        f.write(img_data)
-
-    print(f"Posting: {title}")
+    caption = f"{title} 😂\n\n#kenya #kenyanmemes 🇰🇪"
     
-    # Random Kenyan caption
-    captions = [
-        f"{title} 😂\n\n#kenya #kenyanmemes #nairobi #kisumu #mombasa #kenyantiktok #fyp",
-        f"{title} 💀\n\nWakenya mtatunimaliza 😂 #kenya #memes #sirkal",
-        f"{title} 😭😂\n\nTag a friend! #kenyamemes #kenya #funny"
-    ]
-    caption = random.choice(captions)
-
-    # UPLOAD
-    cl.photo_upload(
-        path=str(image_path),
-        caption=caption
-    )
-    print("✅ POSTED SUCCESSFULLY TO INSTAGRAM!")
-
+    # Extra wait before posting - like human
+    time.sleep(random.randint(15, 30))
+    
+    cl.photo_upload(str(p), caption)
+    print("✅ POSTED SAFE!")
 except Exception as e:
-    print(f"❌ Post failed: {e}")
+    print(f"Post fail: {e}")
     exit(0)
-
-print("Done! Bot will post again in 6 hours.")
