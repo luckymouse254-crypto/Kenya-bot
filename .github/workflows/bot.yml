@@ -1,18 +1,30 @@
 name: Kenya Meme Bot
+
 on:
   schedule:
-    - cron: '0 */3 * * *'
-  workflow_dispatch:
+    - cron: '0 */6 * * *'  # Every 6 hours (was 3 - caused block)
+  workflow_dispatch:  # So you can click Run button
+
 jobs:
   post:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install -r requirements.txt
-      - run: python cloud_bot_once.py
+
+      - name: Install libs
+        run: |
+          pip install instagrapi requests
+
+      - name: Run bot
         env:
           IG_USERNAME: ${{ secrets.IG_USERNAME }}
           IG_PASSWORD: ${{ secrets.IG_PASSWORD }}
+        run: |
+          python cloud_bot_once.py
